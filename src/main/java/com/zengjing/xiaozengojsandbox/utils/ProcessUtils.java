@@ -26,7 +26,7 @@ public class ProcessUtils {
                 StringBuilder compileOutputStringBuilder = new StringBuilder();
                 //逐行读取程序输出
                 while((compileOutputLine=bufferedReader.readLine())!=null){
-                    compileOutputStringBuilder.append(compileOutputLine);
+                    compileOutputStringBuilder.append(compileOutputLine).append("\n");
                 }
                 executeMessage.setMessage(compileOutputStringBuilder.toString());
             }else{
@@ -37,7 +37,7 @@ public class ProcessUtils {
                 StringBuilder compileOutputStringBuilder = new StringBuilder();
                 //逐行读取程序输出
                 while((compileOutputLine=bufferedReader.readLine())!=null){
-                    compileOutputStringBuilder.append(compileOutputLine);
+                    compileOutputStringBuilder.append(compileOutputLine).append("\n");
                 }
                 //分批获取程序的错误输出
                 BufferedReader errorBufferedReader = new BufferedReader(new InputStreamReader(runProcess.getErrorStream()));
@@ -45,7 +45,7 @@ public class ProcessUtils {
                 StringBuilder errorCompileOutputStringBuilder = new StringBuilder();
                 //逐行读取程序错误输出
                 while((errorCompileOutputLine=errorBufferedReader.readLine())!=null){
-                    errorCompileOutputStringBuilder.append(errorCompileOutputLine);
+                    errorCompileOutputStringBuilder.append(errorCompileOutputLine).append("\n");
                 }
                 executeMessage.setErrorMessage(errorCompileOutputStringBuilder.toString());
             }
@@ -81,7 +81,7 @@ public class ProcessUtils {
             StringBuilder compileOutputStringBuilder = new StringBuilder();
             //逐行读取程序输出
             while((compileOutputLine=bufferedReader.readLine())!=null){
-                compileOutputStringBuilder.append(compileOutputLine);
+                compileOutputStringBuilder.append(compileOutputLine).append("\n");
             }
             executeMessage.setMessage(compileOutputStringBuilder.toString());
             //记得资源的释放，否则会卡死

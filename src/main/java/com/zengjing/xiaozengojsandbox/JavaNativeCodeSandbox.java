@@ -2,6 +2,8 @@ package com.zengjing.xiaozengojsandbox;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.dfa.FoundWord;
+import cn.hutool.dfa.WordTree;
 import com.zengjing.xiaozengojsandbox.model.ExecuteCodeRequest;
 import com.zengjing.xiaozengojsandbox.model.ExecuteCodeResponse;
 import com.zengjing.xiaozengojsandbox.model.ExecuteMessage;
@@ -15,17 +17,37 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
 public class JavaNativeCodeSandbox implements CodeSandbox{
     private static final String GLOBAL_CODE_DIR_NAME = "tmpCode";
     private static final String GLOBAL_JAVA_CLASS_NAME = "Main.java";
+    //程序超时时间
+    private static final long TIME_OUT = 5000l;
+    //程序黑名单
+    private static final List<String> blackList = Arrays.asList("Files","exec");
+    //初始化
+    private static WordTree wordTree;
+    static {
+        wordTree=new WordTree();
+        wordTree.addWords(blackList);
+    }
     @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest excuteCodeRequest){
         String code = excuteCodeRequest.getCode();
         String language = excuteCodeRequest.getLanguage();
         List<String> inputList = excuteCodeRequest.getInputList();
+        //校验代码中是否包含黑名单
+        FoundWord foundWord = wordTree.matchWord(code);
+        if(foundWord!=null){
+            System.out.println("包含禁止词"+foundWord.getFoundWord());
+            ExecuteCodeResponse executeCodeResponse = new ExecuteCodeResponse();
+            executeCodeResponse.setStatus(3);
+            executeCodeResponse.setMessage("包含非法词");
+            return executeCodeResponse;
+        }
         //1.将用户代码保存至文件夹
         String userDir = System.getProperty("user.dir");
         String globalCodePathName = userDir+ File.separator+ GLOBAL_CODE_DIR_NAME;
@@ -48,12 +70,23 @@ public class JavaNativeCodeSandbox implements CodeSandbox{
             return getErrorResponse(e);
         }
         //4.执行代码
-        String runCmd = String.format("java -Dfile.encoding=utf-8 -cp %s Main %s");
         ArrayList<ExecuteMessage> executeMessageList = new ArrayList<>();
         for(String test : inputList){
-            Process runProcess = null;
+            String runCmd = String.format("java -Xmx256m -Dfile.encoding=utf-8 -cp %s Main %s",userCodeParentPath,test);
             try {
-                runProcess = Runtime.getRuntime().exec(runCmd);
+                Process runProcess = Runtime.getRuntime().exec(runCmd);
+                //运行程序前开启一个新线程休眠，如果休眠时间超时，杀死正在运行的进程
+                new Thread(()->{
+                    try{
+                        Thread.sleep(TIME_OUT);
+                        System.out.println("超时了，中断");
+                        if (runProcess.isAlive()){
+                            runProcess.destroy();
+                        }
+                    }catch (Exception e) {
+                        throw new RuntimeException();
+                    }
+                }).start();
                 //运行代码
                 ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(runProcess, "运行");
                 //将输出信息存入集合中
