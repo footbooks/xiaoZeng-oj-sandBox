@@ -5,7 +5,7 @@ package com.zengjing.xiaozengojsandbox.security;
  */
 public class WriteSecurityManager extends SecurityManager{
     @Override
-    public void checkRead(String file) {
+    public void checkWrite(String file) {
         throw new SecurityException("写权限异常"+file);
     }
 }
