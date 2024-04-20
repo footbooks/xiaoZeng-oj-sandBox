@@ -8,6 +8,7 @@ import com.zengjing.xiaozengojsandbox.model.ExecuteCodeRequest;
 import com.zengjing.xiaozengojsandbox.model.ExecuteCodeResponse;
 import com.zengjing.xiaozengojsandbox.model.ExecuteMessage;
 import com.zengjing.xiaozengojsandbox.model.JudgeInfo;
+import com.zengjing.xiaozengojsandbox.security.DefultSecurityManager;
 import com.zengjing.xiaozengojsandbox.utils.ProcessUtils;
 import org.springframework.util.StringUtils;
 
@@ -36,6 +37,7 @@ public class JavaNativeCodeSandbox implements CodeSandbox{
     }
     @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest excuteCodeRequest){
+        System.setSecurityManager(new DefultSecurityManager());
         String code = excuteCodeRequest.getCode();
         String language = excuteCodeRequest.getLanguage();
         List<String> inputList = excuteCodeRequest.getInputList();
