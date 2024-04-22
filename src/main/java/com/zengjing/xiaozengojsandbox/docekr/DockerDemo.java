@@ -21,13 +21,13 @@ public class DockerDemo {
             }
         };
         //拉取镜像
-        String dockerName = "nginx:latest";
-        PullImageCmd pullImageCmd = dockerClient.pullImageCmd(dockerName);
+        String image = "nginx:latest";
+        PullImageCmd pullImageCmd = dockerClient.pullImageCmd(image);
         pullImageCmd.exec(pullImageResultCallback)
                 .awaitCompletion();
         System.out.println("下载完成");
         //创建容器
-        CreateContainerCmd containerCmd = dockerClient.createContainerCmd(dockerName);
+        CreateContainerCmd containerCmd = dockerClient.createContainerCmd(image);
         CreateContainerResponse createContainerResponse = containerCmd
                 .withCmd("echo","Hello Docker")
                 .exec();
@@ -59,6 +59,6 @@ public class DockerDemo {
         //删除容器
         dockerClient.removeContainerCmd(containerId).withForce(true).exec();
         //删除镜像
-        dockerClient.removeImageCmd(dockerName).withForce(true).exec();
+        dockerClient.removeImageCmd(image).withForce(true).exec();
     }
 }
