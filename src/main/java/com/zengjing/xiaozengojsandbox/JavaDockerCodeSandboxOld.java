@@ -1,8 +1,10 @@
 package com.zengjing.xiaozengojsandbox;
 
 import cn.hutool.core.date.StopWatch;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.StrUtil;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.*;
@@ -12,26 +14,45 @@ import com.github.dockerjava.core.command.ExecStartResultCallback;
 import com.zengjing.xiaozengojsandbox.model.ExecuteCodeRequest;
 import com.zengjing.xiaozengojsandbox.model.ExecuteCodeResponse;
 import com.zengjing.xiaozengojsandbox.model.ExecuteMessage;
+import com.zengjing.xiaozengojsandbox.model.JudgeInfo;
+import com.zengjing.xiaozengojsandbox.security.MySecurityManager;
 import org.springframework.stereotype.Component;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
 @Component
-public class JavaDockerCodeSandbox extends JavaCodeSandbocTemplate{
+public class JavaDockerCodeSandboxOld implements CodeSandbox{
+    private static final String GLOBAL_CODE_DIR_NAME = "tmpCode";
+    private static final String GLOBAL_JAVA_CLASS_NAME = "Main.java";
     //程序超时时间
     private static final long TIME_OUT = 5000l;
     private static Boolean FIRST_INIT = true;
-
     @Override
-    public List<ExecuteMessage> runFile(File userCodeFile, List<String> inputList) {
+    public ExecuteCodeResponse executeCode(ExecuteCodeRequest excuteCodeRequest) {
+        System.setSecurityManager(new MySecurityManager());
+        String code = excuteCodeRequest.getCode();
+        String language = excuteCodeRequest.getLanguage();
+        List<String> inputList = excuteCodeRequest.getInputList();
+
+        //1.将用户代码保存至文件夹
+        String userDir = System.getProperty("user.dir");
+        String globalCodePathName = userDir+ File.separator+ GLOBAL_CODE_DIR_NAME;
+        //判断全局代码是否存在，没用则创建
+        if(!FileUtil.exist(globalCodePathName)){
+            FileUtil.mkdir(globalCodePathName);
+        }
+        //2.把用户代码隔离存放
+        String userCodeParentPath = globalCodePathName+File.separator+ UUID.randomUUID();
+        String userCodePath = userCodeParentPath + File.separator + GLOBAL_JAVA_CLASS_NAME;
+        File userCodeFile = FileUtil.writeString(code, userCodePath, StandardCharsets.UTF_8);
         //3.创建容器，上传编译文件
-        String userCodeParentPath = userCodeFile.getParentFile().getAbsolutePath();
         DockerClient dockerClient = DockerClientBuilder.getInstance().build();
         //拉取镜像
         String dockerName = "openjdk:8-alpine";
@@ -175,7 +196,47 @@ public class JavaDockerCodeSandbox extends JavaCodeSandbocTemplate{
             executeMessage.setMemory(maxMemory[0]);
             executeMessageList.add(executeMessage);
         }
-        return executeMessageList;
+        //5.收集整理输出结果
+        ExecuteCodeResponse executeCodeResponse = new ExecuteCodeResponse();
+        ArrayList<String> outputList = new ArrayList<>();
+        //取用时最大值，判断程序有没有超时
+        Long maxTime = null;
+        for(ExecuteMessage needExecuteMessage:executeMessageList){
+            Long time = needExecuteMessage.getTime();
+            if(time>maxTime){
+                maxTime=time;
+            }
+            String neederrorMessage = needExecuteMessage.getErrorMessage();
+            if(StrUtil.isNotBlank(neederrorMessage)){
+                executeCodeResponse.setMessage(neederrorMessage);
+                executeCodeResponse.setStatus(3);
+                break;
+            }
+            outputList.add(needExecuteMessage.getMessage());
+        }
+        executeCodeResponse.setOutputList(outputList);
+        if (outputList.size() == executeMessageList.size()){
+            executeCodeResponse.setStatus(1);
+        }
+        JudgeInfo judgeInfo = new JudgeInfo();
+        judgeInfo.setTime(maxTime);
+        //要调用第三方库，先不实现
+//        judgeInfo.setMessage();
+        executeCodeResponse.setJudgeInfo(judgeInfo);
+        //6.清理文件,防止服务器空间不足
+        if(userCodeFile.getParentFile() != null){
+            String userCodeParentPathEnd = userCodeFile.getParentFile().getAbsolutePath();
+            boolean result = FileUtil.del(userCodeParentPathEnd);
+            System.out.println("删除"+(result?"成功":"失败"));
+        }
+        return executeCodeResponse;
     }
-
+    private ExecuteCodeResponse getErrorResponse(Throwable e){
+        ExecuteCodeResponse executeCodeResponse = new ExecuteCodeResponse();
+        executeCodeResponse.setOutputList(new ArrayList<>());
+        executeCodeResponse.setMessage(e.getMessage());
+        executeCodeResponse.setStatus(2);
+        executeCodeResponse.setJudgeInfo(new JudgeInfo());
+        return executeCodeResponse;
+    }
 }

@@ -1,6 +1,6 @@
 package com.zengjing.xiaozengojsandbox.controller;
 
-import com.zengjing.xiaozengojsandbox.JavaNativeCodeSandbox;
+import com.zengjing.xiaozengojsandbox.JavaNativeCodeSandboxOld;
 import com.zengjing.xiaozengojsandbox.model.ExecuteCodeRequest;
 import com.zengjing.xiaozengojsandbox.model.ExecuteCodeResponse;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +17,7 @@ public class MainController {
     private final static String AUTH_REQUEST_HEADER = "auth";
     private final static String AUTH_REQUEST_SECRET = "secretKey";
     @Resource
-    private JavaNativeCodeSandbox javaNativeCodeSandbox;
+    private JavaNativeCodeSandboxOld javaNativeCodeSandbox;
     @RequestMapping("/health")
     public String healthCheck(){
         return "ok";
