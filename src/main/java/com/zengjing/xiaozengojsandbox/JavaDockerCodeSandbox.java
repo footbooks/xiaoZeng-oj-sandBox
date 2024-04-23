@@ -2,10 +2,9 @@ package com.zengjing.xiaozengojsandbox;
 
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.dfa.FoundWord;
-import cn.hutool.dfa.WordTree;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.*;
@@ -17,9 +16,6 @@ import com.zengjing.xiaozengojsandbox.model.ExecuteCodeResponse;
 import com.zengjing.xiaozengojsandbox.model.ExecuteMessage;
 import com.zengjing.xiaozengojsandbox.model.JudgeInfo;
 import com.zengjing.xiaozengojsandbox.security.MySecurityManager;
-import com.zengjing.xiaozengojsandbox.utils.ProcessUtils;
-
-import javax.swing.text.StyledEditorKit;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -78,14 +74,23 @@ public class JavaDockerCodeSandbox implements CodeSandbox{
         }
         //创建容器
         CreateContainerCmd containerCmd = dockerClient.createContainerCmd(dockerName);
+        String profileConfig = ResourceUtil.readUtf8Str("profile.json");
         HostConfig hostConfig = new HostConfig();
         //限制内存为100
-        hostConfig.withMemory(100*1000*1000l);
+        hostConfig.withMemory(100*1000* 1000L);
         //限制使用cpu核数为1
-        hostConfig.withCpuCount(1l);
+        hostConfig.withCpuCount(1L);
+        //设置内存交换值
+        hostConfig.withMemorySwap(0L);
+        //限制用户权限
+        hostConfig.withSecurityOpts(Arrays.asList("seccomp="+profileConfig));
         hostConfig.setBinds(new Bind(userCodeParentPath,new Volume("/app")));
         CreateContainerResponse createContainerResponse = containerCmd
                 .withHostConfig(hostConfig)
+                //限制网络
+                .withNetworkDisabled(true)
+                //限制不能往根路径读写文件
+                .withReadonlyRootfs(true)
                 .withAttachStdin(true)
                 .withAttachStderr(true)
                 .withAttachStdout(true)
@@ -114,6 +119,8 @@ public class JavaDockerCodeSandbox implements CodeSandbox{
                     .exec();
             System.out.println("执行命令"+execCreateCmdResponse);
             String execId = execCreateCmdResponse.getId();
+            //判断程序是否超时
+            final boolean[] timeout = {true};
             ExecStartResultCallback execStartResultCallback = new ExecStartResultCallback(){
                 @Override
                 public void onNext(Frame frame) {
@@ -127,6 +134,12 @@ public class JavaDockerCodeSandbox implements CodeSandbox{
                         System.out.println("输出结果："+frame.getPayload());
                     }
                     super.onNext(frame);
+                }
+                @Override
+                public void onComplete(){
+                    //如果执行完成，则表示没超时
+                    timeout[0] =false;
+                    super.onComplete();
                 }
             };
             //获取内存的占用
@@ -167,6 +180,7 @@ public class JavaDockerCodeSandbox implements CodeSandbox{
                 stopWatch.start();
                 dockerClient.execStartCmd(execId)
                         .exec(execStartResultCallback)
+                        //设置程序运行时间，单位毫秒
                         .awaitCompletion(TIME_OUT, TimeUnit.MICROSECONDS);
                 stopWatch.stop();
                 time = stopWatch.getLastTaskTimeMillis();
