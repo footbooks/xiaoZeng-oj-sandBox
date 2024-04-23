@@ -10,13 +10,15 @@ import com.zengjing.xiaozengojsandbox.model.ExecuteMessage;
 import com.zengjing.xiaozengojsandbox.model.JudgeInfo;
 import com.zengjing.xiaozengojsandbox.security.MySecurityManager;
 import com.zengjing.xiaozengojsandbox.utils.ProcessUtils;
+import org.springframework.stereotype.Component;
+
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-
+@Component
 public class JavaNativeCodeSandbox implements CodeSandbox{
     private static final String GLOBAL_CODE_DIR_NAME = "tmpCode";
     private static final String GLOBAL_JAVA_CLASS_NAME = "Main.java";

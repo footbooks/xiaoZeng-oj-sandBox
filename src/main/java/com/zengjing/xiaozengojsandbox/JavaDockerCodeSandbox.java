@@ -16,6 +16,8 @@ import com.zengjing.xiaozengojsandbox.model.ExecuteCodeResponse;
 import com.zengjing.xiaozengojsandbox.model.ExecuteMessage;
 import com.zengjing.xiaozengojsandbox.model.JudgeInfo;
 import com.zengjing.xiaozengojsandbox.security.MySecurityManager;
+import org.springframework.stereotype.Component;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
+@Component
 public class JavaDockerCodeSandbox implements CodeSandbox{
     private static final String GLOBAL_CODE_DIR_NAME = "tmpCode";
     private static final String GLOBAL_JAVA_CLASS_NAME = "Main.java";
