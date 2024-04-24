@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-@Component
+//@Component
 public class JavaNativeCodeSandboxOld implements CodeSandbox{
     private static final String GLOBAL_CODE_DIR_NAME = "tmpCode";
     private static final String GLOBAL_JAVA_CLASS_NAME = "Main.java";
@@ -34,7 +34,7 @@ public class JavaNativeCodeSandboxOld implements CodeSandbox{
     }
     @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest excuteCodeRequest){
-        System.setSecurityManager(new MySecurityManager());
+//        System.setSecurityManager(new MySecurityManager());
         String code = excuteCodeRequest.getCode();
         String language = excuteCodeRequest.getLanguage();
         List<String> inputList = excuteCodeRequest.getInputList();

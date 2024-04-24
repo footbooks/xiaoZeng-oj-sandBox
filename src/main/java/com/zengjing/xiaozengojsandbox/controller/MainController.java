@@ -1,5 +1,6 @@
 package com.zengjing.xiaozengojsandbox.controller;
 
+import com.zengjing.xiaozengojsandbox.JavaNativeCodeSandbox;
 import com.zengjing.xiaozengojsandbox.JavaNativeCodeSandboxOld;
 import com.zengjing.xiaozengojsandbox.model.ExecuteCodeRequest;
 import com.zengjing.xiaozengojsandbox.model.ExecuteCodeResponse;
@@ -17,7 +18,7 @@ public class MainController {
     private final static String AUTH_REQUEST_HEADER = "auth";
     private final static String AUTH_REQUEST_SECRET = "secretKey";
     @Resource
-    private JavaNativeCodeSandboxOld javaNativeCodeSandbox;
+    private JavaNativeCodeSandbox javaNativeCodeSandbox;
     @RequestMapping("/health")
     public String healthCheck(){
         return "ok";

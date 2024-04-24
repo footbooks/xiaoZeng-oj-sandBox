@@ -18,6 +18,7 @@ public class ProcessUtils {
     public static ExecuteMessage runProcessAndGetMessage(Process runProcess,String opName){
         ExecuteMessage executeMessage = new ExecuteMessage();
         try{
+            long starttime = System.currentTimeMillis();
             int exitVaile = runProcess.waitFor();
             executeMessage.setExitVaile(exitVaile);
             if(exitVaile==0){
@@ -33,6 +34,8 @@ public class ProcessUtils {
 //                    compileOutputStringBuilder.append(compileOutputLine).append("\n");
                 }
                 executeMessage.setMessage(StringUtils.join(outputList,"\n"));
+                long endTime = System.currentTimeMillis();
+                executeMessage.setTime(endTime-starttime);
             }else{
                 System.out.println(opName+"失败，错误码："+exitVaile);
                 //分批获取程序的正常输出
@@ -56,6 +59,8 @@ public class ProcessUtils {
                     errorOutputList.add(errorCompileOutputLine);
 //                    errorCompileOutputStringBuilder.append(errorCompileOutputLine).append("\n");
                 }
+                long endTime = System.currentTimeMillis();
+                executeMessage.setTime(endTime-starttime);
                 executeMessage.setErrorMessage(StringUtils.join(errorOutputList,"\n"));
             }
         }catch (Exception e){

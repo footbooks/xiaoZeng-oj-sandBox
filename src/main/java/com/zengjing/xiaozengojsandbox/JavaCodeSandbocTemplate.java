@@ -110,7 +110,7 @@ public abstract class JavaCodeSandbocTemplate implements CodeSandbox{
         ExecuteCodeResponse executeCodeResponse = new ExecuteCodeResponse();
         ArrayList<String> outputList = new ArrayList<>();
         //取用时最大值，判断程序有没有超时
-        Long maxTime = null;
+        Long maxTime = 0L;
         for(ExecuteMessage executeMessage:executeMessageList){
             Long time = executeMessage.getTime();
             if(time>maxTime){
@@ -151,7 +151,7 @@ public abstract class JavaCodeSandbocTemplate implements CodeSandbox{
     }
     @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest excuteCodeRequest){
-        System.setSecurityManager(new MySecurityManager());
+//        System.setSecurityManager(new MySecurityManager());
         String code = excuteCodeRequest.getCode();
         String language = excuteCodeRequest.getLanguage();
         List<String> inputList = excuteCodeRequest.getInputList();
@@ -159,9 +159,11 @@ public abstract class JavaCodeSandbocTemplate implements CodeSandbox{
         File userCodeFile = saveCodeToFile(code);
         //2.编译代码，得到class文件
         ExecuteMessage compileFileExecuteMessage = compileFile(userCodeFile);
-        System.out.println(compileFileExecuteMessage);
         //3.执行代码
         List<ExecuteMessage> executeMessageList = runFile(userCodeFile,inputList);
+        for(ExecuteMessage executeMessage:executeMessageList){
+            System.out.println(executeMessage);
+        }
         //4.收集整理输出结果
         ExecuteCodeResponse executeCodeResponse = collectResult(executeMessageList);
         //5.清理文件,防止服务器空间不足
